@@ -32,9 +32,17 @@ class SpidercdepSpider(scrapy.Spider):
 
     def parse_summary(self, response):
         logger.info('parsing the summary')
-        for sel in response.xpath('//div[@class = "grup-parlamentar-list grupuri-parlamentare-list"]/table/tbody/tr/td'):
+        for sel in response.xpath('//div[@class = "grup-parlamentar-list grupuri-parlamentare-list"]/table/tbody/tr'):
             item = ParliamentVoteSummaryItem()
-            item['time_of_vote'] = sel.xpath('/a/u/text()').extract()
+
+            item['url_to_vote_details'] = sel.css('a::attr(href)')[0].extract()
+            item['time_of_vote'] = sel.xpath('.//u')[1].extract()
+            vote_id_components = sel.xpath('.//u/a/text()').extract()
+            item_id = vote_id_components[1]
+            if len(vote_id_components) > 2:
+                item_id = item_id + ' ' + vote_id_components[2]
+            item['id'] = item_id
+            item['description'] = sel.xpath('.//td/text()').extract()[4].replace('\n', '')
             yield item
 
     def parse_error(self, failure):
