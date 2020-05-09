@@ -41,7 +41,7 @@ class ParliamentscrapperSpiderMiddleware:
 
         # Should return either None or an iterable of Request, dict
         # or Item objects.
-        pass
+        print(exception)
 
     def process_start_requests(self, start_requests, spider):
         # Called with the start requests of the spider, and works

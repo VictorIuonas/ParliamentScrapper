@@ -43,7 +43,22 @@ class SpidercdepSpider(scrapy.Spider):
                 item_id = item_id + ' ' + vote_id_components[2]
             item['id'] = item_id
             item['description'] = sel.xpath('.//td/text()').extract()[4].replace('\n', '')
-            yield item
+
+            url_to_details = response.urljoin(item['url_to_vote_details'])
+            request_to_details = scrapy.Request(
+                url_to_details, callback=self.parse_details, errback=self.parse_error,
+                headers={
+                    'Host': 'www.cdep.ro',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:76.0) Gecko/20100101 Firefox/76.0'
+                }
+            )
+            request_to_details.meta['item'] = item
+            yield request_to_details
+
+    def parse_details(self, response):
+        logger.info('parsing the details')
+        item = response.meta['item']
+        yield item
 
     def parse_error(self, failure):
         logger.error('got error')
