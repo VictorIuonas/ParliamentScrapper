@@ -35,7 +35,7 @@ class SpidercdepSpider(scrapy.Spider):
         for sel in response.xpath('//div[@class = "grup-parlamentar-list grupuri-parlamentare-list"]/table/tbody/tr'):
             item = ParliamentVoteSummaryItem()
 
-            item['url_to_vote_details'] = sel.css('a::attr(href)')[0].extract()
+            item['url_to_vote_details'] = response.urljoin(sel.css('a::attr(href)')[0].extract())
             item['time_of_vote'] = sel.xpath('.//u')[1].extract()
             vote_id_components = sel.xpath('.//u/a/text()').extract()
             item_id = vote_id_components[1]
@@ -58,6 +58,28 @@ class SpidercdepSpider(scrapy.Spider):
     def parse_details(self, response):
         logger.info('parsing the details')
         item = response.meta['item']
+
+        selected_main_table = response.css('.program-lucru-detalii')[0]
+        row_to_transcript = selected_main_table.xpath('.//table//tr')[2]
+        url_to_transcript = response.urljoin(row_to_transcript.css('a::attr(href)')[0].extract())
+        item['url_to_transcript'] = url_to_transcript
+
+        logger.info(f'creating req to transcript at: {url_to_transcript}')
+        request_to_transcript = scrapy.Request(
+            url_to_transcript, callback=self.parse_transcript, errback=self.parse_error,
+            headers={
+                'Host': 'www.cdep.ro',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:76.0) Gecko/20100101 Firefox/76.0'
+            }
+        )
+        request_to_transcript.meta['item'] = item
+
+        yield request_to_transcript
+
+    def parse_transcript(self, response):
+        logger.info('parsing transcript')
+        item = response.meta['item']
+
         yield item
 
     def parse_error(self, failure):
