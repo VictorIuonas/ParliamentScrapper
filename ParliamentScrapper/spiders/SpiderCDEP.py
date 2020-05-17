@@ -3,7 +3,7 @@ import logging
 
 import scrapy
 
-from ParliamentScrapper.items import ParliamentVoteSummaryItem
+from ParliamentScrapper.items import ParliamentVoteSummaryItem, TranscriptBlock
 
 logger = logging.getLogger()
 
@@ -72,6 +72,8 @@ class SpidercdepSpider(scrapy.Spider):
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:76.0) Gecko/20100101 Firefox/76.0'
             }
         )
+
+        item['transcript'] = []
         request_to_transcript.meta['item'] = item
 
         yield request_to_transcript
@@ -79,6 +81,30 @@ class SpidercdepSpider(scrapy.Spider):
     def parse_transcript(self, response):
         logger.info('parsing transcript')
         item = response.meta['item']
+        transcript = item['transcript']
+
+        selected_main_table = response.css('#olddiv').css('table')[1]
+
+        current_speaker = ''
+
+        all_relevant_tds = selected_main_table.css('td[width="100%"]')
+        for relevant_td in all_relevant_tds:
+            all_paragraphs = relevant_td.xpath('.//p|.//li')
+            current_content = ''
+
+            for paragraph in all_paragraphs:
+                speaker_paragraph = paragraph.css('a')
+
+                if speaker_paragraph:
+                    current_speaker = speaker_paragraph.css('font::text').get()
+                else:
+                    paragraph_content = ' '.join(paragraph.css('::text').extract())
+                    current_content = f'{current_content}{paragraph_content}'
+
+            transcript_block = TranscriptBlock()
+            transcript_block['speaker_name'] = current_speaker
+            transcript_block['content'] = ' '.join(current_content.split())
+            transcript.append(transcript_block)
 
         yield item
 

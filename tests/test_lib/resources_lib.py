@@ -1,3 +1,4 @@
+import codecs
 import os
 
 import scrapy
@@ -21,7 +22,8 @@ def fake_response_from_file(file_name: str, url=None):
     else:
         file_path = file_name
 
-    file_content = open(file_path, 'r').read()
+    with codecs.open(file_path, 'r', encoding='iso-8859-2') as file:
+        file_content = file.read()
 
     response = scrapy.http.HtmlResponse(
         encoding='utf-8',
