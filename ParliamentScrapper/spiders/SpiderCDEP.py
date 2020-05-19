@@ -2,6 +2,7 @@
 import logging
 
 import scrapy
+from scrapy import Selector
 
 from ParliamentScrapper.items import ParliamentVoteSummaryItem, TranscriptBlock
 
@@ -32,28 +33,61 @@ class SpidercdepSpider(scrapy.Spider):
 
     def parse_summary(self, response):
         logger.info('parsing the summary')
-        for sel in response.xpath('//div[@class = "grup-parlamentar-list grupuri-parlamentare-list"]/table/tbody/tr'):
+        for table_row in response.xpath(
+                '//div[@class = "grup-parlamentar-list grupuri-parlamentare-list"]/table/tbody/tr[@bgcolor="#ffffff"]'
+        ):
             item = ParliamentVoteSummaryItem()
 
-            item['url_to_vote_details'] = response.urljoin(sel.css('a::attr(href)')[0].extract())
-            item['time_of_vote'] = sel.xpath('.//u')[1].extract()
-            vote_id_components = sel.xpath('.//u/a/text()').extract()
-            item_id = vote_id_components[1]
-            if len(vote_id_components) > 2:
-                item_id = item_id + ' ' + vote_id_components[2]
-            item['id'] = item_id
-            item['description'] = sel.xpath('.//td/text()').extract()[4].replace('\n', '')
+            link_selector = table_row.css('a::attr(href)')
+            is_link_to_details_present = len(link_selector) != 0
+            if is_link_to_details_present:
+                item['url_to_vote_details'] = response.urljoin(link_selector[0].extract())
 
-            url_to_details = response.urljoin(item['url_to_vote_details'])
-            request_to_details = scrapy.Request(
-                url_to_details, callback=self.parse_details, errback=self.parse_error,
-                headers={
-                    'Host': 'www.cdep.ro',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:76.0) Gecko/20100101 Firefox/76.0'
-                }
-            )
-            request_to_details.meta['item'] = item
-            yield request_to_details
+            all_row_data = table_row.css('td')
+
+            time_of_vote_cell = all_row_data[1]
+            vote_id_cell = all_row_data[2]
+            vote_description_cell = all_row_data[3]
+
+            item['time_of_vote'] = self._extract_time_of_vote(time_of_vote_cell).replace('\n', '')
+            item['id'] = self._extract_vote_id(vote_id_cell).replace('\n', '')
+            item['description'] = self._extract_content_selector_from_optional_link_cell(
+                vote_description_cell
+            ).get().replace('\n', '')
+
+            if is_link_to_details_present:
+                url_to_details = response.urljoin(item['url_to_vote_details'])
+                request_to_details = scrapy.Request(
+                    url_to_details, callback=self.parse_details, errback=self.parse_error,
+                    headers={
+                        'Host': 'www.cdep.ro',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:76.0) Gecko/20100101 Firefox/76.0'
+                    }
+                )
+                request_to_details.meta['item'] = item
+                yield request_to_details
+            else:
+                yield item
+
+    @classmethod
+    def _extract_content_selector_from_optional_link_cell(cls, cell: Selector) -> Selector:
+        content_in_link = cell.css('a::text')
+        if content_in_link:
+            return content_in_link
+
+        return cell.css('::text')
+
+    @classmethod
+    def _extract_time_of_vote(cls, time_of_vote_cell: Selector) -> str:
+        return cls._extract_content_selector_from_optional_link_cell(time_of_vote_cell).get()
+
+    @classmethod
+    def _extract_vote_id(cls, vote_id_cell: Selector) -> str:
+        id_list_selector = cls._extract_content_selector_from_optional_link_cell(vote_id_cell)
+        item_id = ' '.join(id_list_selector.extract())
+
+        return item_id
+
 
     def parse_details(self, response):
         logger.info('parsing the details')
