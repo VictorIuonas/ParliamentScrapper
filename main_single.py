@@ -1,8 +1,11 @@
 from scrapy import cmdline
 
-crawl_command_pattern = 'scrapy crawl SpiderCDEP -a date={date}'
+from runner.output_cleaner import clean_empty_files_from_folder
 
-command = crawl_command_pattern.format(date='20200513')
+crawl_command_pattern = 'scrapy crawl SpiderCDEP -a date={date} -o output/test_output20200416.csv'
 
-cmdline.execute(command.split())
-# cmdline.execute('scrapy crawl SpiderCDEP -a date=20200513'.split())
+command = crawl_command_pattern.format(date='20200416')
+
+clean_empty_files_from_folder('output')
+
+# cmdline.execute(command.split())

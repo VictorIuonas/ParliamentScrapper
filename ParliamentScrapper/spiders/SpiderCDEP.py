@@ -88,29 +88,37 @@ class SpidercdepSpider(scrapy.Spider):
 
         return item_id
 
-
     def parse_details(self, response):
         logger.info('parsing the details')
         item = response.meta['item']
 
         selected_main_table = response.css('.program-lucru-detalii')[0]
-        row_to_transcript = selected_main_table.xpath('.//table//tr')[2]
-        url_to_transcript = response.urljoin(row_to_transcript.css('a::attr(href)')[0].extract())
-        item['url_to_transcript'] = url_to_transcript
+        header_table = selected_main_table.xpath('.//table')[0]
+        main_table_rows = header_table.xpath('.//tr')
 
-        logger.info(f'creating req to transcript at: {url_to_transcript}')
-        request_to_transcript = scrapy.Request(
-            url_to_transcript, callback=self.parse_transcript, errback=self.parse_error,
-            headers={
-                'Host': 'www.cdep.ro',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:76.0) Gecko/20100101 Firefox/76.0'
-            }
-        )
+        is_link_to_transcript_present = len(main_table_rows) > 2
+        if is_link_to_transcript_present:
+            row_with_link = main_table_rows[2]
+            item['url_to_transcript'] = response.urljoin(row_with_link.css('a::attr(href)')[0].extract())
+        else:
+            item['url_to_transcript'] = 'not available'
 
-        item['transcript'] = []
-        request_to_transcript.meta['item'] = item
+        if is_link_to_transcript_present:
+            logger.info(f'creating req to transcript at: {item["url_to_transcript"]}')
+            request_to_transcript = scrapy.Request(
+                item['url_to_transcript'], callback=self.parse_transcript, errback=self.parse_error,
+                headers={
+                    'Host': 'www.cdep.ro',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:76.0) Gecko/20100101 Firefox/76.0'
+                }
+            )
 
-        yield request_to_transcript
+            item['transcript'] = []
+            request_to_transcript.meta['item'] = item
+
+            yield request_to_transcript
+        else:
+            yield item
 
     def parse_transcript(self, response):
         logger.info('parsing transcript')

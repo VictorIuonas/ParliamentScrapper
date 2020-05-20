@@ -5,8 +5,9 @@ from typing import Generator
 
 from scrapy import cmdline
 
+from runner.output_cleaner import clean_empty_files_from_folder
 
-crawl_command_pattern = 'scrapy crawl SpiderCDEP -a date={date}'
+crawl_command_pattern = 'scrapy crawl SpiderCDEP -a date={date} -o output/vote_details{date}.json'
 
 
 def generate_date_range(start_date: date, end_date: date) -> Generator[date, None, None]:
@@ -20,7 +21,7 @@ def scrapy_worker(command: str):
 
 
 # start_date = date(2006, 2, 6)
-start_date = date(2020, 4, 29)
+start_date = date(2020, 2, 1)
 end_date = date.today()
 
 all_scrape_commands = [
@@ -38,4 +39,6 @@ if __name__ == '__main__':
         print(len(multiple_result))
 
         for result in multiple_result:
-            print(result.get(timeout=10))
+            print(result.get(timeout=50))
+
+#clean_empty_files_from_folder('output')
