@@ -64,9 +64,15 @@ ROBOTSTXT_OBEY = False
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'ParliamentScrapper.pipelines.ParliamentscrapperPipeline': 300,
-#}
+ITEM_PIPELINES = {
+    'ParliamentScrapper.pipelines.MongoPipeline': 200,
+    # 'ParliamentScrapper.pipelines.ParliamentscrapperPipeline': 300,
+}
+
+MONGODB_SERVER = "localhost"
+MONGODB_PORT = 27017
+MONGODB_DB = "test_victor_db"
+MONGODB_COLLECTION = "Romanian_Parliament"
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html

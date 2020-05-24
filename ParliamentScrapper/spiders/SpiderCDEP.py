@@ -6,7 +6,7 @@ from scrapy import Selector
 
 from ParliamentScrapper.items import ParliamentVoteSummaryItem, TranscriptBlock
 
-logger = logging.getLogger()
+logger = logging.getLogger(__file__)
 
 
 class SpidercdepSpider(scrapy.Spider):

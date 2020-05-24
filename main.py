@@ -7,7 +7,7 @@ from scrapy import cmdline
 
 from runner.output_cleaner import clean_empty_files_from_folder
 
-crawl_command_pattern = 'scrapy crawl SpiderCDEP -a date={date} -o output/vote_details{date}.json'
+crawl_command_pattern = 'scrapy crawl SpiderCDEP -a date={date}'
 
 
 def generate_date_range(start_date: date, end_date: date) -> Generator[date, None, None]:
