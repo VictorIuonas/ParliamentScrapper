@@ -48,7 +48,45 @@ class TestSpiderCDEP:
         expected_detailed_vote_info_requests = [
             {
                 'url_to_vote_details': 'http://www.cdep.ro/pls/steno/evot2015.nominal?idv=23134&idl=1',
-                'url_to_transcript': 'http://www.cdep.ro/pls/steno/steno2015.stenograma?ids=8132&idm=5'
+                'url_to_transcript': 'http://www.cdep.ro/pls/steno/steno2015.stenograma?ids=8132&idm=5',
+                'all_votes': [
+                    {
+                        'name_and_surname': 'Deputat1',
+                        'role': '',
+                        'group_membership': 'PNL',
+                        'vote_value': 'DA'
+                    },
+                    {
+                        'name_and_surname': 'Deputat2',
+                        'role': '',
+                        'group_membership': 'Minoritati',
+                        'vote_value': 'DA'
+                    },
+                    {
+                        'name_and_surname': 'Deputat3',
+                        'role': '',
+                        'group_membership': 'UDMR',
+                        'vote_value': 'NU'
+                    },
+                    {
+                        'name_and_surname': 'Deputat4',
+                        'role': '',
+                        'group_membership': 'Minoritati',
+                        'vote_value': 'DA'
+                    },
+                    {
+                        'name_and_surname': 'Deputat5',
+                        'role': '',
+                        'group_membership': 'PNL',
+                        'vote_value': 'DA'
+                    },
+                    {
+                        'name_and_surname': 'Deputat6',
+                        'role': '',
+                        'group_membership': '-',
+                        'vote_value': 'AB'
+                    }
+                ]
             }
         ]
 
@@ -206,6 +244,8 @@ Așa să faceți!
 
                 assert expected_req['url_to_vote_details'] == actual_item['url_to_vote_details']
                 assert expected_req['url_to_transcript'] == actual_item['url_to_transcript']
+
+                assert len(expected_req['all_votes']) == len(actual_item['all_votes'])
 
         def then_the_parse_vote_transcript_will_extract_it_in_the_result(self, expected_vote_information: List):
             assert len(expected_vote_information) == len(self.actual_parse_transcript_result)

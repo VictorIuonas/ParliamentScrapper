@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
+from typing import List
 
 import scrapy
 from scrapy import Selector
 
-from ParliamentScrapper.items import ParliamentVoteSummaryItem, TranscriptBlock
+from ParliamentScrapper.items import ParliamentVoteSummaryItem, TranscriptBlock, VoteItem
 
 logger = logging.getLogger(__file__)
 
@@ -92,6 +93,8 @@ class SpidercdepSpider(scrapy.Spider):
         logger.info('parsing the details')
         item = response.meta['item']
 
+        item['all_votes'] = self._extract_all_votes(response)
+
         selected_main_table = response.css('.program-lucru-detalii')[0]
         header_table = selected_main_table.xpath('.//table')[0]
         main_table_rows = header_table.xpath('.//tr')
@@ -119,6 +122,37 @@ class SpidercdepSpider(scrapy.Spider):
             yield request_to_transcript
         else:
             yield item
+
+    @classmethod
+    def _extract_all_votes(cls, response) -> List[VoteItem]:
+        result = []
+        vote_table = response.css('table[width="100%"][cellspacing="0"][cellpadding="3"]')
+        if len(vote_table) > 0:
+            last_table_index = len(vote_table) - 1
+            vote_rows = vote_table[last_table_index].xpath(".//tr[@valign='top']")
+            for row in vote_rows:
+                vote_cells = row.xpath('.//td')
+                is_member_role_present = len(vote_cells) > 4
+
+                member_role = ''
+                vote_value_index = 3
+                group_value_index = 2
+
+                if is_member_role_present:
+                    vote_value_index = 4
+                    group_value_index = 3
+                    member_role = vote_cells[2].css('::text').get()
+
+                single_result = VoteItem()
+                single_result['name_and_surname'] = vote_cells[1].css('::text').get()
+                single_result['role'] = member_role
+                single_result['group_membership'] = vote_cells[group_value_index].css('::text').get()
+                vote_value = vote_cells[vote_value_index].css('::text').get()
+                single_result['vote_value'] = vote_value.replace('\n', '')
+
+                result.append(single_result)
+
+        return result
 
     def parse_transcript(self, response):
         logger.info('parsing transcript')

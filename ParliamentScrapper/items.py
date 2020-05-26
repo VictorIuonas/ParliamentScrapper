@@ -25,7 +25,15 @@ class ParliamentVoteSummaryItem(scrapy.Item):
     no_of_votes_against = scrapy.Field()
     no_of_abstentions = scrapy.Field()
     no_of_no_votes = scrapy.Field()
+    all_votes = scrapy.Field()
     transcript = scrapy.Field()
+
+
+class VoteItem(scrapy.Item):
+    name_and_surname = scrapy.Field()
+    role = scrapy.Field()
+    group_membership = scrapy.Field()
+    vote_value = scrapy.Field()
 
 
 class TranscriptBlock(scrapy.Item):
