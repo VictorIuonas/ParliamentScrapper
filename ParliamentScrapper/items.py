@@ -39,3 +39,8 @@ class VoteItem(scrapy.Item):
 class TranscriptBlock(scrapy.Item):
     speaker_name = scrapy.Field()
     content = scrapy.Field()
+
+
+class SpanishDailyPublications(scrapy.Item):
+    link_to_previous_page = scrapy.Field()
+    link_to_publications = scrapy.Field()
