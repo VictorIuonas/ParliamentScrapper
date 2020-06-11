@@ -4,8 +4,8 @@ from unittest.mock import MagicMock
 
 import scrapy
 
-from items import ParliamentVoteSummaryItem
-from spiders.SpiderCDEP import SpidercdepSpider
+from ParliamentScrapper.items import ParliamentVoteSummaryItem
+from ParliamentScrapper.spiders.SpiderCDEP import SpidercdepSpider
 from tests.test_lib.resources_lib import fake_response_from_file
 
 
